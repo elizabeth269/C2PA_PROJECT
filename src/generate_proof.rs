@@ -68,7 +68,7 @@ pub fn verify_proof() -> Result<(), Box<dyn std::error::Error>> {
         .map(|s| Fr::from_str(s).unwrap())
         .collect();
 
-    let result = verify_proof(&pvk, &proof, &public_inputs)?;
+    let result = verify_proof(/*&pvk, &proof, &public_inputs*/)?;
     if result {
         println!("Proof is valid");
     } else {
