@@ -7,14 +7,13 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
-// Assuming ProvenanceCircuit is defined in a separate module
 use crate::circuit::ProvenanceCircuit;
 use crate::image_utils::load_and_hash_image;
 
 #[derive(Serialize, Deserialize)]
 struct ProofData {
     proof: Vec<u8>,
-    public_inputs: Vec<String>, // Changed to String for easier serialization
+    public_inputs: Vec<String>, // Store as strings
 }
 
 pub fn generate_proof(image_path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -37,7 +36,7 @@ pub fn generate_proof(image_path: &str) -> Result<(), Box<dyn std::error::Error>
 
     let proof_data = ProofData {
         proof: proof_vec,
-        public_inputs: vec![format!("{:?}", hash)], // Convert Fr to String
+        public_inputs: vec![hash.to_string()], // Convert Fr to String
     };
 
     let file = File::create("proof.json")?;
@@ -65,10 +64,10 @@ pub fn verify_proof() -> Result<(), Box<dyn std::error::Error>> {
     let public_inputs: Vec<Fr> = proof_data
         .public_inputs
         .iter()
-        .map(|s| Fr::from_str(s).unwrap())
+        .map(|s| Fr::from_str(s).expect("Failed to parse Fr"))
         .collect();
 
-    let result = verify_proof(/*&pvk, &proof, &public_inputs*/)?;
+    let result = verify_proof(&pvk, &proof, &public_inputs)?;
     if result {
         println!("Proof is valid");
     } else {
