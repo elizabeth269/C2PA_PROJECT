@@ -7,13 +7,14 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
+// Assuming ProvenanceCircuit is defined in a separate module
 use crate::circuit::ProvenanceCircuit;
 use crate::image_utils::load_and_hash_image;
 
 #[derive(Serialize, Deserialize)]
 struct ProofData {
     proof: Vec<u8>,
-    public_inputs: Vec<Fr>,
+    public_inputs: Vec<String>, // Changed to String for easier serialization
 }
 
 pub fn generate_proof(image_path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -21,14 +22,14 @@ pub fn generate_proof(image_path: &str) -> Result<(), Box<dyn std::error::Error>
 
     let params = {
         let rng = &mut thread_rng();
-        generate_random_parameters::<Bn256, _, _>(ProvenanceCircuit { hash: None }, rng)?
+        generate_random_parameters::<Bn256, _, _>(ProvenanceCircuit::new(None), rng)?
     };
 
     let pvk = prepare_verifying_key(&params.vk);
 
     let proof = {
         let rng = &mut thread_rng();
-        create_random_proof(ProvenanceCircuit { hash: Some(hash) }, &params, rng)?
+        create_random_proof(ProvenanceCircuit::new(Some(hash)), &params, rng)?
     };
 
     let mut proof_vec = vec![];
@@ -36,7 +37,7 @@ pub fn generate_proof(image_path: &str) -> Result<(), Box<dyn std::error::Error>
 
     let proof_data = ProofData {
         proof: proof_vec,
-        public_inputs: vec![hash],
+        public_inputs: vec![format!("{:?}", hash)], // Convert Fr to String
     };
 
     let file = File::create("proof.json")?;
@@ -53,17 +54,21 @@ pub fn verify_proof() -> Result<(), Box<dyn std::error::Error>> {
 
     let params = {
         let rng = &mut thread_rng();
-        generate_random_parameters::<Bn256, _, _>(ProvenanceCircuit { hash: None }, rng)?
+        generate_random_parameters::<Bn256, _, _>(ProvenanceCircuit::new(None), rng)?
     };
 
     let pvk = prepare_verifying_key(&params.vk);
 
-    let proof = {
-        let mut proof_vec = &proof_data.proof[..];
-        bellman::groth16::Proof::read(&mut proof_vec)?
-    };
+    let proof = bellman::groth16::Proof::read(&proof_data.proof[..])?;
 
-    let result = verify_proof(&pvk, &proof, &proof_data.public_inputs)?;
+    // Convert String back to Fr
+    let public_inputs: Vec<Fr> = proof_data
+        .public_inputs
+        .iter()
+        .map(|s| Fr::from_str(s).unwrap())
+        .collect();
+
+    let result = verify_proof(&pvk, &proof, &public_inputs)?;
     if result {
         println!("Proof is valid");
     } else {
