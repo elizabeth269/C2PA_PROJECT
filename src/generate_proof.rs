@@ -10,7 +10,7 @@ use std::io::{BufReader, BufWriter};
 use crate::circuit::ProvenanceCircuit;
 use crate::image_utils::load_and_hash_image;
 
-// #[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct ProofData {
     proof: Vec<u8>,
     public_inputs: Vec<String>, // Store as strings
@@ -67,7 +67,7 @@ pub fn verify_proof() -> Result<(), Box<dyn std::error::Error>> {
         .map(|s| Fr::from_str(s).expect("Failed to parse Fr"))
         .collect();
 
-    let result = verify_proof(/*&pvk, &proof, &public_inputs*/)?;
+    let result = verify_proof(&pvk, &proof, &public_inputs)?;
     if result {
         println!("Proof is valid");
     } else {
