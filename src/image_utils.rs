@@ -1,3 +1,4 @@
+use bellman::gadgets::sha256::sha256;
 use bellman::pairing::bn256::Fr;
 use image::io::Reader as ImageReader;
 use image::GenericImageView;
