@@ -2,6 +2,7 @@ use bellman::groth16::{
     create_random_proof, generate_random_parameters, prepare_verifying_key, verify_proof,
 };
 use bellman::pairing::bn256::{Bn256, Fr};
+use pairing::Engine;
 use rand::thread_rng;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
